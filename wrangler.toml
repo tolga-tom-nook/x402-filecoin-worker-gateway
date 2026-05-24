@@ -1,0 +1,9 @@
+name = "x402-filecoin-worker-gateway"
+main = "src/worker.js"
+compatibility_date = "2026-05-24"
+
+[vars]
+X402_AMOUNT = "0.10"
+X402_ASSET = "USDC"
+X402_NETWORK = "testnet"
+MAX_UPLOAD_BYTES = "1048576"

@@ -12,7 +12,7 @@ export function createWorker({ storage = defaultStorage } = {}) {
       }
 
       if (request.method === 'POST' && url.pathname === '/upload-session') {
-        const payment = verifyPayment(request)
+        const payment = verifyPayment(request, env)
         if (!payment.ok) {
           return paymentRequired({
             amount: env.X402_AMOUNT || '0.10',
@@ -28,7 +28,18 @@ export function createWorker({ storage = defaultStorage } = {}) {
       if (request.method === 'POST' && url.pathname === '/objects') {
         const token = request.headers.get('x-upload-session')
         if (!token) return Response.json({ error: 'missing upload session' }, { status: 401 })
+
+        const maxBytes = Number(env.MAX_UPLOAD_BYTES || 1048576)
+        const contentLength = request.headers.get('content-length')
+        if (contentLength && Number(contentLength) > maxBytes) {
+          return Response.json({ error: 'object exceeds paid byte allowance' }, { status: 413 })
+        }
+
         const bytes = new Uint8Array(await request.arrayBuffer())
+        if (bytes.byteLength > maxBytes) {
+          return Response.json({ error: 'object exceeds paid byte allowance' }, { status: 413 })
+        }
+
         try {
           const metadata = await storage.putObject({ token, bytes, contentType: request.headers.get('content-type') || undefined })
           return Response.json({ object: metadata }, { status: 201 })

@@ -4,12 +4,15 @@ Reference implementation for a paywalled storage gateway: an HTTP client receive
 
 This repo is an early proof artifact for Filecoin devgrant proposal [filecoin-project/devgrants#2113](https://github.com/filecoin-project/devgrants/issues/2113). It is intentionally non-custodial: no private keys, seed phrases, or production storage credentials are committed or required for local tests.
 
+**Status:** proof artifact for proposal discussion only. This repo does not imply the grant has been awarded, approved, or paid.
+
 ## What works now
 
-- Cloudflare Worker-style `fetch` handler.
+- Cloudflare Worker-style `fetch` handler using Web Crypto APIs.
 - `POST /upload-session` returns `402 Payment Required` without an `x-payment` proof.
-- Mock paid flow with `x-payment: mock-paid:<payer>`.
-- Short-lived upload session tokens.
+- Mock paid flow with `x-payment: mock-paid:<payer>` when `ALLOW_MOCK_PAYMENTS=true`.
+- Short-lived, single-use upload session tokens.
+- Request-layer byte-limit checks using `Content-Length` when present.
 - Local in-memory Filecoin/IPFS adapter boundary.
 - Metadata persistence tests using Node's built-in test runner.
 
@@ -32,7 +35,7 @@ npm run start
 # Payment challenge
 curl -i -X POST http://localhost:8787/upload-session
 
-# Mock paid session
+# Mock paid session; mock verifier must be explicitly enabled in env/wrangler vars.
 curl -s -X POST http://localhost:8787/upload-session \
   -H 'x-payment: mock-paid:demo-agent'
 
@@ -52,6 +55,8 @@ Production deployments should replace the mock verifier and `InMemoryStorageAdap
 3. durable metadata storage for `cid`, payer, byte allowance, timestamps, and audit details;
 4. secret handling via Worker bindings, never source control.
 
+Do not deploy the mock verifier as a production payment gate. It is accepted only when `ALLOW_MOCK_PAYMENTS=true`, and that flag exists solely for local proof/demo runs.
+
 ## Non-goals
 
 - No custody of user funds.
@@ -61,4 +66,4 @@ Production deployments should replace the mock verifier and `InMemoryStorageAdap
 
 ## License
 
-MIT/Apache-2 dual license intended for grant deliverables.
+MIT.
